@@ -14315,6 +14315,8 @@ with pkgs;
 
   odroid-xu3-bootloader = callPackage ../tools/misc/odroid-xu3-bootloader { };
 
+  ofono = callPackage ../servers/ofono { };
+
   ofp = callPackage ../os-specific/linux/ofp { };
 
   openpam = callPackage ../development/libraries/openpam { };
