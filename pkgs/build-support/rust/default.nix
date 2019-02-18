@@ -1,4 +1,4 @@
-{ stdenv, cacert, git, cargo, rustc, cargo-vendor, fetchcargo, python3 }:
+{ stdenv, cacert, git, cargo, rustc, cargo-vendor, fetchcargo }:
 
 { name, cargoSha256 ? "unset"
 , src ? null
@@ -41,7 +41,8 @@ in stdenv.mkDerivation (args // {
 
   patchRegistryDeps = ./patch-registry-deps;
 
-  buildInputs = [ cacert git cargo rustc ] ++ buildInputs;
+  nativeBuildInputs = [ cargo ];
+  buildInputs = [ cacert git rustc ] ++ buildInputs;
 
   patches = cargoPatches ++ patches;
 

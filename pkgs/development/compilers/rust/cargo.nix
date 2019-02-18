@@ -19,8 +19,8 @@ rustPlatform.buildRustPackage rec {
   # changes hash of vendor directory otherwise
   dontUpdateAutotoolsGnuConfigScripts = true;
 
-  nativeBuildInputs = [ pkgconfig ];
-  buildInputs = [ cacert file curl python openssl cmake zlib makeWrapper libgit2 ]
+  nativeBuildInputs = [ pkgconfig cmake makeWrapper python ];
+  buildInputs = [ cacert file curl openssl zlib libgit2 ]
     ++ stdenv.lib.optionals stdenv.isDarwin [ CoreFoundation Security libiconv ];
 
   LIBGIT2_SYS_USE_PKG_CONFIG=1;
