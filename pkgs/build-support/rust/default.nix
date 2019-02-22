@@ -101,6 +101,11 @@ in stdenv.mkDerivation (args // {
     runHook postBuild
   '';
 
+  postBuild = args.postBuild or ''
+    rm -rf target/release
+    ln -srf ${releaseDir} target/
+  '';
+
   checkPhase = args.checkPhase or ''
     runHook preCheck
     echo "Running cargo test"
