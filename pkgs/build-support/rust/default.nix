@@ -12,11 +12,13 @@
 , cargoUpdateHook ? ""
 , cargoDepsHook ? ""
 , cargoBuildFlags ? []
+, buildType ? "release"
 
 , cargoVendorDir ? null
 , ... } @ args:
 
 assert cargoVendorDir == null -> cargoSha256 != "unset";
+assert buildType == "release" || buildType == "debug";
 
 let
   cargoDeps = if cargoVendorDir == null
@@ -41,7 +43,7 @@ let
   cxxForBuild="${buildPackages.stdenv.cc}/bin/${buildPackages.stdenv.cc.targetPrefix}cxx";
   ccForHost="${stdenv.cc}/bin/${stdenv.cc.targetPrefix}cc";
   cxxForHost="${stdenv.cc}/bin/${stdenv.cc.targetPrefix}cxx";
-  releaseDir = "target/${stdenv.hostPlatform.config}/release";
+  releaseDir = "target/${stdenv.hostPlatform.config}/${buildType}";
 
 in stdenv.mkDerivation (args // {
   inherit cargoDeps;
@@ -97,7 +99,7 @@ in stdenv.mkDerivation (args // {
       "CC_${stdenv.hostPlatform.config}"="${ccForHost}" \
       "CXX_${stdenv.hostPlatform.config}"="${cxxForHost}" \
       cargo build \
-        --release \
+        --${buildType} \
         --target ${stdenv.hostPlatform.config} \
         --frozen ${concatStringsSep " " cargoBuildFlags}
     )
@@ -105,7 +107,7 @@ in stdenv.mkDerivation (args // {
     # rename the output dir to a architecture independent one
     mapfile -t targets < <(find "$NIX_BUILD_TOP" -type d | grep '${releaseDir}$')
     for target in "''${targets[@]}"; do
-      rm -rf "$target/../../release"
+      rm -rf "$target/../../${buildType}"
       ln -srf "$target" "$target/../../"
     done
 
