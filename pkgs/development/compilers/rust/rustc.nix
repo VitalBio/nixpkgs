@@ -1,6 +1,6 @@
 { stdenv, removeReferencesTo, targetPackages, buildPackages
 , fetchurl, fetchgit, fetchzip, file, python2, tzdata, ps
-, llvm_7, jemalloc, ncurses, darwin, git, cmake, curl, rustPlatform
+, llvm_7, ncurses, darwin, git, cmake, curl, rustPlatform
 , which, libffi, gdb
 , withBundledLLVM ? false
 }:
@@ -10,10 +10,6 @@ let
   inherit (darwin.apple_sdk.frameworks) Security;
 
   llvmShared = llvm_7.override { enableSharedLibraries = true; };
-
-  buildJemalloc = buildPackages.jemalloc.override { stripPrefix = false; };
-  hostJemalloc = jemalloc.override { stripPrefix = false; };
-  targetJemalloc = targetPackages.jemalloc.override { stripPrefix = false; };
 in stdenv.mkDerivation rec {
   pname = "rustc";
   version = "1.32.0";
@@ -54,7 +50,7 @@ in stdenv.mkDerivation rec {
   # Reference: https://github.com/rust-lang/rust/blob/master/src/bootstrap/configure.py
   configureFlags = let
     setBuild = "--set=target.${stdenv.hostPlatform.config}";
-    ccForBuild = "${buildPackages.stdenv.cc}/bin/{buildPackages.stdenv.cc.targetPrefix}cc";
+    ccForBuild = "${buildPackages.stdenv.cc}/bin/${buildPackages.stdenv.cc.targetPrefix}cc";
     setHost = "--set=target.${stdenv.hostPlatform.config}";
     ccForHost = "${stdenv.cc}/bin/${stdenv.cc.targetPrefix}cc";
     setTarget = "--set=target.${stdenv.targetPlatform.config}";
@@ -80,10 +76,6 @@ in stdenv.mkDerivation rec {
     "${setBuild}.cxx=${buildPackages.stdenv.cc}/bin/c++"
     "${setHost}.cxx=${buildPackages.stdenv.cc}/bin/c++"
     "${setTarget}.cxx=${targetPackages.stdenv.cc}/bin/${targetPackages.stdenv.cc.targetPrefix}c++"
-
-    "${setBuild}.jemalloc=${hostJemalloc}/lib/libjemalloc_pic.a"
-    "${setHost}.jemalloc=${hostJemalloc}/lib/libjemalloc_pic.a"
-    "${setTarget}.jemalloc=${targetJemalloc}/lib/libjemalloc_pic.a"
   ] ++ optional (!withBundledLLVM) [
     "--enable-llvm-link-shared"
     "${setBuild}.llvm-config=${llvmShared}/bin/llvm-config"
@@ -159,7 +151,7 @@ in stdenv.mkDerivation rec {
   # ps is needed for one of the test cases
   nativeBuildInputs = [
     file python2 ps rustPlatform.rust.rustc git cmake
-    which libffi removeReferencesTo buildJemalloc
+    which libffi removeReferencesTo
   ] # Only needed for the debuginfo tests
     ++ optional (!stdenv.isDarwin) gdb;
 
