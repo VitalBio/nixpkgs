@@ -10,6 +10,7 @@ let
   inherit (darwin.apple_sdk.frameworks) Security;
 
   llvmShared = llvm_7.override { enableSharedLibraries = true; };
+  buildLlvmShared = buildPackages.llvm_7.override { enableSharedLibraries = true; };
 in stdenv.mkDerivation rec {
   pname = "rustc";
   version = "1.32.0";
@@ -49,7 +50,7 @@ in stdenv.mkDerivation rec {
   # We need rust to build rust. If we don't provide it, configure will try to download it.
   # Reference: https://github.com/rust-lang/rust/blob/master/src/bootstrap/configure.py
   configureFlags = let
-    setBuild = "--set=target.${stdenv.hostPlatform.config}";
+    setBuild = "--set=target.${stdenv.buildPlatform.config}";
     ccForBuild = "${buildPackages.stdenv.cc}/bin/${buildPackages.stdenv.cc.targetPrefix}cc";
     setHost = "--set=target.${stdenv.hostPlatform.config}";
     ccForHost = "${stdenv.cc}/bin/${stdenv.cc.targetPrefix}cc";
@@ -57,8 +58,8 @@ in stdenv.mkDerivation rec {
     ccForTarget = "${targetPackages.stdenv.cc}/bin/${targetPackages.stdenv.cc.targetPrefix}cc";
   in [
     "--release-channel=stable"
-    "--enable-local-rust"
-    "--local-rust-root=${rustPlatform.rust.rustc}"
+    "--set=build.rustc=${rustPlatform.rust.rustc}/bin/rustc"
+    "--set=build.cargo=${rustPlatform.rust.cargo}/bin/cargo"
     "--enable-rpath"
     "--enable-vendor"
     "--default-linker=${ccForBuild}"
@@ -74,12 +75,13 @@ in stdenv.mkDerivation rec {
     "${setTarget}.linker=${ccForTarget}"
 
     "${setBuild}.cxx=${buildPackages.stdenv.cc}/bin/c++"
-    "${setHost}.cxx=${buildPackages.stdenv.cc}/bin/c++"
+    "${setHost}.cxx=${stdenv.cc}/bin/c++"
     "${setTarget}.cxx=${targetPackages.stdenv.cc}/bin/${targetPackages.stdenv.cc.targetPrefix}c++"
   ] ++ optional (!withBundledLLVM) [
     "--enable-llvm-link-shared"
-    "${setBuild}.llvm-config=${llvmShared}/bin/llvm-config"
+    "${setBuild}.llvm-config=${buildLlvmShared}/bin/llvm-config"
     "${setHost}.llvm-config=${llvmShared}/bin/llvm-config"
+    # should this be removed?
     "${setTarget}.llvm-config=${llvmShared}/bin/llvm-config"
   ];
 
@@ -144,7 +146,7 @@ in stdenv.mkDerivation rec {
     rm -v src/test/ui/run-pass/threads-sendsync/sync-send-in-std.rs || true  # FIXME: ???
   '';
 
-  # rustc unfortunately need cmake for compiling llvm-rt but doesn't
+  # rustc unfortunately needs cmake to compile llvm-rt but doesn't
   # use it for the normal build. This disables cmake in Nix.
   dontUseCmakeConfigure = true;
 
