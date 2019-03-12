@@ -42,9 +42,9 @@ let
     '';
 
   ccForBuild="${buildPackages.stdenv.cc}/bin/${buildPackages.stdenv.cc.targetPrefix}cc";
-  cxxForBuild="${buildPackages.stdenv.cc}/bin/${buildPackages.stdenv.cc.targetPrefix}cxx";
+  cxxForBuild="${buildPackages.stdenv.cc}/bin/${buildPackages.stdenv.cc.targetPrefix}c++";
   ccForHost="${stdenv.cc}/bin/${stdenv.cc.targetPrefix}cc";
-  cxxForHost="${stdenv.cc}/bin/${stdenv.cc.targetPrefix}cxx";
+  cxxForHost="${stdenv.cc}/bin/${stdenv.cc.targetPrefix}c++";
   releaseDir = "target/${stdenv.hostPlatform.config}/${buildType}";
 
   # NOTE: this is a HACK to use other rustc's standard crates
@@ -99,8 +99,8 @@ in stdenv.mkDerivation (args // {
 
   configurePhase = args.configurePhase or ''
     runHook preConfigure
-    mkdir .cargo
-    cat > .cargo/config <<'EOF'
+    mkdir -p .cargo
+    cat >> .cargo/config <<'EOF'
     [target."${stdenv.buildPlatform.config}"]
     "linker" = "${ccForBuild}"
     ${stdenv.lib.optionalString (stdenv.buildPlatform.config != stdenv.hostPlatform.config) ''
