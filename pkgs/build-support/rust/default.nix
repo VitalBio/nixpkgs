@@ -1,6 +1,4 @@
-{ stdenv, cacert, git, cargo, cargo-vendor, fetchcargo, python3
-, buildPackages, pkgsCross, runCommand, rustc
-}:
+{ stdenv, cacert, git, cargo, rustc, cargo-vendor, fetchcargo, python3, buildPackages }:
 
 { name, cargoSha256 ? "unset"
 , src ? null
@@ -47,34 +45,12 @@ let
   cxxForHost="${stdenv.cc}/bin/${stdenv.cc.targetPrefix}c++";
   releaseDir = "target/${stdenv.hostPlatform.config}/${buildType}";
 
-  # NOTE: this is a HACK to use other rustc's standard crates
-  rustcCross = let
-    host = stdenv.hostPlatform.platform.name;
-  in runCommand "rustc-cross-${stdenv.hostPlatform.config}" {} ''
-    mkdir -p $out
-    cp -a ${buildPackages.rustc}/. $out/
-    chmod u+w -R $out
-
-    rm -rf $out/lib/rustlib/${stdenv.hostPlatform.config}
-    cp -a \
-      ${pkgsCross."${host}".rustc}/lib/rustlib/${stdenv.hostPlatform.config}/. \
-      $out/lib/rustlib/${stdenv.hostPlatform.config}/
-
-    chmod a-w -R $out
-  '';
-  isCross = stdenv.buildPlatform.config != stdenv.hostPlatform.config;
-
 in stdenv.mkDerivation (args // {
   inherit cargoDeps;
 
   patchRegistryDeps = ./patch-registry-deps;
 
-  nativeBuildInputs = [
-    cargo
-    (if isCross then rustcCross else rustc)
-    git
-    cacert
-  ] ++ nativeBuildInputs;
+  nativeBuildInputs = [ cargo rustc git cacert ] ++ nativeBuildInputs;
   inherit buildInputs;
 
   patches = cargoPatches ++ patches;
