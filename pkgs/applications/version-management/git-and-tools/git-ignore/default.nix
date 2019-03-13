@@ -21,8 +21,6 @@ buildRustPackage rec {
     darwin.apple_sdk.frameworks.Security
   ];
 
-  PKG_CONFIG_ALLOW_CROSS = 1;
-
   meta = with stdenv.lib; {
     description = "Quickly and easily fetch .gitignore templates from gitignore.io";
     homepage = https://github.com/sondr3/git-ignore;

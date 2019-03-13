@@ -18,8 +18,6 @@ rustPlatform.buildRustPackage rec {
 
   cargoBuildFlags = [ "--all" ];
 
-  PKG_CONFIG_ALLOW_CROSS = 1;
-
   meta = with stdenv.lib; {
     description = "Flexible and fast BitTorrent daemon";
     homepage = https://synapse-bt.org/;

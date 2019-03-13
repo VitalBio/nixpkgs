@@ -13,8 +13,6 @@ rustPlatform.buildRustPackage rec {
 
   cargoSha256 = "1hn2l25fariidgdr32mfx2yqb3g8xk4qafs614bdjiyvfrb7j752";
 
-  PKG_CONFIG_ALLOW_CROSS = 1;
-
   nativeBuildInputs = [ cmake pkgconfig ];
   buildInputs = [ openssl ] ++ stdenv.lib.optionals stdenv.isDarwin [ CoreServices cf-private ];
 
