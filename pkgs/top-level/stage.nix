@@ -127,7 +127,15 @@ let
     # will refer to the "hello" package built for the ARM6-based
     # Raspberry Pi.
     pkgsCross = lib.mapAttrs (n: crossSystem:
-                              nixpkgsFun { inherit crossSystem; })
+                              (nixpkgsFun { inherit crossSystem; }) // {
+                                static = nixpkgsFun {
+                                  crossSystem = crossSystem // {
+                                    config = builtins.replaceStrings
+                                      ["-gnu"] ["-musl"] crossSystem.config;
+                                  };
+                                  crossOverlays = [ (import ./static.nix) ];
+                                };
+                              })
                               lib.systems.examples;
 
     # All packages built with the Musl libc. This will override the
