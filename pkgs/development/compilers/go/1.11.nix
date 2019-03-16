@@ -23,6 +23,7 @@ let
     "armv5tel" = "arm";
     "armv6l" = "arm";
     "armv7l" = "arm";
+    "armv7" = "arm";
   }.${platform.parsed.cpu.name} or (throw "Unsupported system");
 
 in
