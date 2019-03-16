@@ -8,6 +8,11 @@ stdenv.mkDerivation rec {
     sha256 = "0drnil8bzd4n4qb0wv3ilm9zvypxvwmzd65w96d6kfm7x6q65j68";
   };
 
+  preConfigure = ''
+    export ac_cv_func_malloc_0_nonnull=yes
+    export ac_cv_func_realloc_0_nonnull=yes
+  '';
+
   meta = with stdenv.lib; {
     description = "Library to send/receive data according to the Modbus protocol";
     homepage = http://libmodbus.org/;
