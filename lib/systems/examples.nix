@@ -34,6 +34,16 @@ rec {
     platform = platforms.raspberrypi;
   };
 
+  beaglebone = {
+    config = "armv7-unknown-linux-gnueabihf";
+    platform = platforms.beaglebone // {
+      gcc = {
+        cpu = "cortex-a8";
+        fpu = "neon";
+      };
+    };
+  };
+
   armv7l-hf-multiplatform = rec {
     config = "armv7l-unknown-linux-gnueabihf";
     platform = platforms.armv7l-hf-multiplatform;
@@ -119,7 +129,7 @@ rec {
     config = "aarch64-none-elf";
     libc = "newlib";
   };
-  
+
   aarch64be-embedded = {
     config = "aarch64_be-none-elf";
     libc = "newlib";
@@ -129,12 +139,12 @@ rec {
     config = "powerpc-none-eabi";
     libc = "newlib";
   };
-  
+
   ppcle-embedded = {
     config = "powerpcle-none-eabi";
     libc = "newlib";
   };
-  
+
   alpha-embedded = {
     config = "alpha-elf";
     libc = "newlib";
