@@ -1,4 +1,4 @@
-{ stdenv, fetchurl, nspr, perl, zlib, sqlite, fixDarwinDylibNames }:
+{ stdenv, fetchurl, nspr, perl, zlib, sqlite, fixDarwinDylibNames, buildPackages }:
 
 let
   nssPEM = fetchurl {
@@ -17,7 +17,11 @@ in stdenv.mkDerivation rec {
     sha256 = "1ihzqspvqjmysp1c15xxr7kqvj3zm9dqnanxhkaxyjgx71yv6z88";
   };
 
-  buildInputs = [ perl zlib sqlite ]
+  depsBuildBuild = [ buildPackages.stdenv.cc ];
+
+  nativeBuildInputs = [ perl ];
+
+  buildInputs = [ zlib sqlite ]
     ++ stdenv.lib.optional stdenv.isDarwin fixDarwinDylibNames;
 
   propagatedBuildInputs = [ nspr ];
@@ -52,7 +56,15 @@ in stdenv.mkDerivation rec {
     "NSS_ENABLE_ECC=1"
     "USE_SYSTEM_ZLIB=1"
     "NSS_USE_SYSTEM_SQLITE=1"
-  ] ++ stdenv.lib.optional stdenv.is64bit "USE_64=1"
+  ] ++ stdenv.lib.optional (stdenv.hostPlatform != stdenv.buildPlatform) (let
+    cpu = stdenv.hostPlatform.parsed.cpu.name;
+  in [
+    "NATIVE_CC=${buildPackages.stdenv.cc}/bin/cc"
+    "CROSS_COMPILE=1"
+    "NSS_DISABLE_GTESTS=1" # don't want to build tests when cross-compiling
+    "OS_TEST=${cpu}"
+    "CPU_ARCH=${cpu}"
+  ]) ++ stdenv.lib.optional stdenv.is64bit "USE_64=1"
     ++ stdenv.lib.optional stdenv.isDarwin "CCC=clang++";
 
   NIX_CFLAGS_COMPILE = "-Wno-error";
@@ -95,7 +107,10 @@ in stdenv.mkDerivation rec {
     chmod 0755 $out/bin/nss-config
   '';
 
-  postFixup = ''
+  postFixup = let
+    isCross = stdenv.hostPlatform != stdenv.buildPlatform;
+    nss = if isCross then buildPackages.nss.tools else "$out";
+  in ''
     for libname in freebl3 nssdbm3 softokn3
     do '' +
     (if stdenv.isDarwin
@@ -106,7 +121,7 @@ in stdenv.mkDerivation rec {
        libfile="$out/lib/lib$libname.so"
        LD_LIBRARY_PATH=$out/lib:${nspr.out}/lib \
      '') + ''
-        $out/bin/shlibsign -v -i "$libfile"
+        ${nss}/bin/shlibsign -v -i "$libfile"
     done
 
     moveToOutput bin "$tools"
