@@ -17,7 +17,7 @@ in stdenv.mkDerivation rec {
     sha256 = "073iqa0pwa7ab0qw33h3ic89508a78incmg6rq914d6br7s030zy";
   };
 
-  outputs = [ "out" "man" "dev" "devdoc" ];
+  outputs = [ "out" "man" "dev" ];
 
   patches = [
     (substituteAll {
@@ -55,11 +55,13 @@ in stdenv.mkDerivation rec {
   preConfigure = "./autogen.sh";
 
   configureFlags = [
-    "--enable-gtk-doc"
+    # "--enable-gtk-doc"
     "--localstatedir=/var"
     "--with-systemdsystemunitdir=$(out)/etc/systemd/system"
     "--with-udevdir=$(out)/lib/udev"
   ];
+
+  NOCONFIGURE = 1;
 
   makeFlags = [
     "INTROSPECTION_GIRDIR=$(dev)/share/gir-1.0"
