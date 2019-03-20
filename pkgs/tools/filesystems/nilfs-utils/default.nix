@@ -21,6 +21,9 @@ stdenv.mkDerivation rec {
     sed -e '/sysconfdir=\/etc/d; ' -i configure
     sed -e "s@sbindir=/sbin@sbindir=$out/sbin@" -i configure
     sed -e 's@/sbin/@'"$out"'/sbin/@' -i ./lib/cleaner*.c
+
+    export ac_cv_func_malloc_0_nonnull=yes
+    export ac_cv_func_realloc_0_nonnull=yes
   '';
 
   patches = [
