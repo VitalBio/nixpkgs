@@ -1,5 +1,6 @@
 { stdenv, fetchurl, fetchpatch, pkgconfig, attr, acl, zlib, libuuid, e2fsprogs, lzo
 , asciidoc, xmlto, docbook_xml_dtd_45, docbook_xsl, libxslt, zstd, python3, python3Packages
+, buildPackages
 }:
 
 stdenv.mkDerivation rec {
@@ -12,10 +13,10 @@ stdenv.mkDerivation rec {
   };
 
   nativeBuildInputs = [
-    pkgconfig asciidoc xmlto docbook_xml_dtd_45 docbook_xsl libxslt python3 python3Packages.setuptools
+    pkgconfig asciidoc xmlto docbook_xml_dtd_45 docbook_xsl libxslt buildPackages.python3
   ];
 
-  buildInputs = [ attr acl zlib libuuid e2fsprogs lzo zstd ];
+  buildInputs = [ attr acl zlib libuuid e2fsprogs lzo zstd python3 python3Packages.setuptools ];
 
   # gcc bug with -O1 on ARM with gcc 4.8
   # This should be fine on all platforms so apply universally
@@ -25,7 +26,9 @@ stdenv.mkDerivation rec {
     install -v -m 444 -D btrfs-completion $out/etc/bash_completion.d/btrfs
   '';
 
-  configureFlags = stdenv.lib.optional stdenv.hostPlatform.isMusl "--disable-backtrace";
+  configureFlags = [
+  "--disable-python"
+  ] ++ stdenv.lib.optional stdenv.hostPlatform.isMusl "--disable-backtrace";
 
   meta = with stdenv.lib; {
     description = "Utilities for the btrfs filesystem";
