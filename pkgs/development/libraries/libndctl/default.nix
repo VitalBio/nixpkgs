@@ -1,6 +1,7 @@
 { stdenv, fetchFromGitHub, autoreconfHook
 , asciidoctor, pkgconfig, xmlto, docbook_xsl, docbook_xml_dtd_45, libxslt
-, json_c, kmod, which, file, utillinux, systemd
+, json_c, kmod, file, utillinux, systemd
+, buildPackages
 }:
 
 stdenv.mkDerivation rec {
@@ -31,7 +32,7 @@ stdenv.mkDerivation rec {
 
   patchPhase = ''
     patchShebangs test
-    substituteInPlace configure.ac --replace "which" "${which}/bin/which"
+    substituteInPlace configure.ac --replace "which" "${buildPackages.which}/bin/which"
 
     substituteInPlace git-version --replace /bin/bash ${stdenv.shell}
     substituteInPlace git-version-gen --replace /bin/sh ${stdenv.shell}
