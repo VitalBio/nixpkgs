@@ -11544,7 +11544,7 @@ in
 
   libxml2Python = pkgs.buildEnv { # slightly hacky
     name = "libxml2+py-${res.libxml2.version}";
-    paths = with libxml2; [ dev bin py ];
+    paths = with libxml2; [ dev bin ] ++ lib.optional (libxml2 ? py) libxml2.py;
     inherit (libxml2) passthru;
     # the hook to find catalogs is hidden by buildEnv
     postBuild = ''
