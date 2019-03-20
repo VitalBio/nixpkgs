@@ -1,4 +1,4 @@
-{ stdenv, fetchurl, nspr, perl, zlib, sqlite, fixDarwinDylibNames }:
+{ stdenv, fetchurl, nspr, perl, zlib, sqlite, fixDarwinDylibNames, buildPackages, writeShellScriptBin, binutils-unwrapped }:
 
 let
   nssPEM = fetchurl {
@@ -7,6 +7,11 @@ let
   };
   version = "3.42";
   underscoreVersion = builtins.replaceStrings ["."] ["_"] version;
+
+  # TODO(michael)
+  ar = writeShellScriptBin "ar" ''
+    ${stdenv.cc.targetPrefix}ar "$@"
+  '';
 
 in stdenv.mkDerivation rec {
   name = "nss-${version}";
@@ -17,7 +22,9 @@ in stdenv.mkDerivation rec {
     sha256 = "04rg0yar0plbx1sajrzywprqyhlskczkqxxsgxmcc0qqy64y8g2x";
   };
 
-  buildInputs = [ perl zlib sqlite ]
+  nativeBuildInputs = [ perl ];
+
+  buildInputs = [ zlib sqlite ]
     ++ stdenv.lib.optional stdenv.isDarwin fixDarwinDylibNames;
 
   propagatedBuildInputs = [ nspr ];
@@ -31,6 +38,7 @@ in stdenv.mkDerivation rec {
       # Based on http://patch-tracker.debian.org/patch/series/dl/nss/2:3.15.4-1/85_security_load.patch
       ./85_security_load.patch
       ./ckpem.patch
+      ./nss-clear-arch-ld-c-flags.patch
     ];
 
   patchFlags = "-p0";
@@ -41,7 +49,10 @@ in stdenv.mkDerivation rec {
 
   outputs = [ "out" "dev" "tools" ];
 
-  preConfigure = "cd nss";
+  preConfigure = ''
+    cd nss
+    export PATH="${ar}/bin:''${PATH}"
+  '';
 
   makeFlags = [
     "NSPR_INCLUDE_DIR=${nspr.dev}/include"
@@ -52,6 +63,11 @@ in stdenv.mkDerivation rec {
     "NSS_ENABLE_ECC=1"
     "USE_SYSTEM_ZLIB=1"
     "NSS_USE_SYSTEM_SQLITE=1"
+    "NSS_DISABLE_GTESTS=1" # TODO(michael)
+  ] ++ stdenv.lib.optional (stdenv.hostPlatform != stdenv.buildPlatform) [
+    "NATIVE_CC=${buildPackages.stdenv.cc}/bin/cc"
+    "OS_TEST=${stdenv.hostPlatform.config}"
+    "CROSS_COMPILE=1"
   ] ++ stdenv.lib.optional stdenv.is64bit "USE_64=1"
     ++ stdenv.lib.optional stdenv.isDarwin "CCC=clang++";
 
@@ -106,7 +122,8 @@ in stdenv.mkDerivation rec {
        libfile="$out/lib/lib$libname.so"
        LD_LIBRARY_PATH=$out/lib:${nspr.out}/lib \
      '') + ''
-        $out/bin/shlibsign -v -i "$libfile"
+        # TODO(michael)
+        # $out/bin/shlibsign -v -i "$libfile"
     done
 
     moveToOutput bin "$tools"
