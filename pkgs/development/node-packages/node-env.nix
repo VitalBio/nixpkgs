@@ -1,9 +1,13 @@
 # This file originates from node2nix
 
-{stdenv, nodejs, python2, utillinux, libtool, runCommand, writeTextFile}:
+{stdenv, buildPackages, nodejs, utillinux, libtool, runCommand, writeTextFile}:
 
 let
-  python = if nodejs ? python then nodejs.python else python2;
+  python = with buildPackages; if nodejs ? python then nodejs.python else python2;
+
+  archFlags = let
+    cpu = stdenv.hostPlatform.parsed.cpu.family;
+  in "--arch=${cpu} --target_arch=${cpu}";
 
   # Create a tar wrapper that filters all the 'Ignoring unknown extended header keyword' noise
   tarWrapper = runCommand "tarWrapper" {} ''
@@ -24,7 +28,7 @@ let
     stdenv.mkDerivation {
       name = "node-tarball-${name}-${version}";
       inherit src;
-      buildInputs = [ nodejs ];
+      nativeBuildInputs = [ buildPackages.nodejs ];
       buildPhase = ''
         export HOME=$TMPDIR
         tgzFile=$(npm pack | tail -n 1) # Hooks to the pack command will add output (https://docs.npmjs.com/misc/scripts)
@@ -315,6 +319,7 @@ let
     , version
     , dependencies ? []
     , buildInputs ? []
+    , nativeBuildInputs ? []
     , production ? true
     , npmFlags ? ""
     , dontNpmInstall ? false
@@ -327,14 +332,15 @@ let
 
     let
       forceOfflineFlag = if bypassCache then "--offline" else "--registry http://www.example.com";
-      extraArgs = removeAttrs args [ "name" "dependencies" "buildInputs" "dontStrip" "dontNpmInstall" "preRebuild" "unpackPhase" "buildPhase" ];
+      extraArgs = removeAttrs args [ "name" "dependencies" "buildInputs" "nativeBuildInputs" "dontStrip" "dontNpmInstall" "preRebuild" "unpackPhase" "buildPhase" ];
     in
     stdenv.mkDerivation ({
       name = "node-${name}-${version}";
-      buildInputs = [ tarWrapper python nodejs ]
+      nativeBuildInputs = [ tarWrapper python buildPackages.nodejs ]
         ++ stdenv.lib.optional (stdenv.isLinux) utillinux
         ++ stdenv.lib.optional (stdenv.isDarwin) libtool
-        ++ buildInputs;
+        ++ nativeBuildInputs;
+      inherit buildInputs;
 
       inherit dontStrip; # Stripping may fail a build for some package deployments
       inherit dontNpmInstall preRebuild unpackPhase buildPhase;
@@ -384,14 +390,14 @@ let
           node ${addIntegrityFieldsScript}
         ''}
 
-        npm ${forceOfflineFlag} --nodedir=${nodeSources} ${npmFlags} ${stdenv.lib.optionalString production "--production"} rebuild
+        npm ${forceOfflineFlag} --nodedir=${nodeSources} ${npmFlags} ${archFlags} ${stdenv.lib.optionalString production "--production"} rebuild
 
         if [ "$dontNpmInstall" != "1" ]
         then
             # NPM tries to download packages even when they already exist if npm-shrinkwrap is used.
             rm -f npm-shrinkwrap.json
 
-            npm ${forceOfflineFlag} --nodedir=${nodeSources} ${npmFlags} ${stdenv.lib.optionalString production "--production"} install
+            npm ${forceOfflineFlag} --nodedir=${nodeSources} ${npmFlags} ${archFlags} ${stdenv.lib.optionalString production "--production"} install
         fi
 
         # Create symlink to the deployed executable folder, if applicable
@@ -427,6 +433,7 @@ let
     , src
     , dependencies ? []
     , buildInputs ? []
+    , nativeBuildInputs ? []
     , production ? true
     , npmFlags ? ""
     , dontNpmInstall ? false
@@ -439,15 +446,16 @@ let
     let
       forceOfflineFlag = if bypassCache then "--offline" else "--registry http://www.example.com";
 
-      extraArgs = removeAttrs args [ "name" "dependencies" "buildInputs" ];
+      extraArgs = removeAttrs args [ "name" "dependencies" "buildInputs" "nativeBuildInputs" ];
 
       nodeDependencies = stdenv.mkDerivation ({
         name = "node-dependencies-${name}-${version}";
 
-        buildInputs = [ tarWrapper python nodejs ]
+        nativeBuildInputs = [ tarWrapper python buildPackages.nodejs ]
           ++ stdenv.lib.optional (stdenv.isLinux) utillinux
           ++ stdenv.lib.optional (stdenv.isDarwin) libtool
-          ++ buildInputs;
+          ++ nativeBuildInputs;
+        inherit buildInputs;
 
         inherit dontStrip; # Stripping may fail a build for some package deployments
         inherit dontNpmInstall unpackPhase buildPhase;
@@ -497,13 +505,13 @@ let
             node ${addIntegrityFieldsScript}
           ''}
 
-          npm ${forceOfflineFlag} --nodedir=${nodeSources} ${npmFlags} ${stdenv.lib.optionalString production "--production"} rebuild
+          npm ${forceOfflineFlag} --nodedir=${nodeSources} ${npmFlags} ${archFlags} ${stdenv.lib.optionalString production "--production"} rebuild
 
           ${stdenv.lib.optionalString (!dontNpmInstall) ''
             # NPM tries to download packages even when they already exist if npm-shrinkwrap is used.
             rm -f npm-shrinkwrap.json
 
-            npm ${forceOfflineFlag} --nodedir=${nodeSources} ${npmFlags} ${stdenv.lib.optionalString production "--production"} install
+            npm ${forceOfflineFlag} --nodedir=${nodeSources} ${npmFlags} ${archFlags} ${stdenv.lib.optionalString production "--production"} install
           ''}
 
           cd ..
@@ -517,7 +525,10 @@ let
     stdenv.mkDerivation {
       name = "node-shell-${name}-${version}";
 
-      buildInputs = [ python nodejs ] ++ stdenv.lib.optional (stdenv.isLinux) utillinux ++ buildInputs;
+      nativeBuildInputs = [ python buildPackages.nodejs ]
+        ++ stdenv.lib.optional (stdenv.isLinux) utillinux
+        nativeBuildInputs;
+      inherit buildInputs;
       buildCommand = ''
         mkdir -p $out/bin
         cat > $out/bin/shell <<EOF
