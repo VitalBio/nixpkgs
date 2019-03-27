@@ -7,6 +7,7 @@
   }
 # apple frameworks
 , cf-private, Carbon, Cocoa
+, gawk, buildPackages
 }:
 
 let
@@ -18,12 +19,19 @@ stdenv.mkDerivation rec {
   inherit (common) version src postPatch hardeningDisable enableParallelBuilding meta;
 
   nativeBuildInputs = [ gettext pkgconfig ];
-  buildInputs = [ ncurses ]
+  buildInputs = [ ncurses gawk ]
     ++ stdenv.lib.optionals stdenv.hostPlatform.isDarwin [
       Carbon Cocoa
       # Needed for OBJC_CLASS_$_NSArray symbols.
       cf-private
     ];
+
+  disallowedRequisites = [ buildPackages.gawk ];
+
+  # vim patches it's own she-bangs using PATH
+  preInstall = ''
+    export PATH="${gawk}/bin:''${PATH}"
+  '';
 
   configureFlags = [
     "--enable-multibyte"
