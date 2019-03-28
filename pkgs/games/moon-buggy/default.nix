@@ -14,6 +14,12 @@ stdenv.mkDerivation rec {
     sha256 = "0gyjwlpx0sd728dwwi7pwks4zfdy9rm1w1xbhwg6zip4r9nc2b9m";
   };
 
+  # moon-buggy attempts to fill up a high-score during build using `moon-buggy`
+  # this breaks cross compilation
+  preInstall = ''
+    sed -i '/\/moon-buggy -c/d' Makefile
+  '';
+
   meta = {
     description = ''A simple character graphics game where you drive some kind of car across the moon's surface'';
     license = stdenv.lib.licenses.gpl2;
