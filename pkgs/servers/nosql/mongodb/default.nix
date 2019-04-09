@@ -1,9 +1,14 @@
 { stdenv, fetchurl, fetchpatch, scons, boost, gperftools, pcre-cpp, snappy
 , zlib, libyamlcpp, sasl, openssl, libpcap, Security
+, jsEngine ? "mozjs"
+, allocator ? "tcmalloc"
 }:
 
 # Note:
 # The command line tools are written in Go as part of a different package (mongodb-tools)
+
+assert jsEngine == "none" || jsEngine == "mozjs";
+assert allocator == "system" || allocator == "tcmalloc";
 
 with stdenv.lib;
 
@@ -30,9 +35,11 @@ in stdenv.mkDerivation rec {
 
   nativeBuildInputs = [ scons ];
   buildInputs = [
-    sasl boost gperftools pcre-cpp snappy
+    sasl boost pcre-cpp snappy
     zlib libyamlcpp sasl openssl.dev openssl.out libpcap
-  ] ++ stdenv.lib.optionals stdenv.isDarwin [ Security ];
+  ]
+  ++ optionals (!stdenv.isAarch32) [ gperftools ]
+  ++ optionals stdenv.isDarwin [ Security ];
 
   patches =
     [
@@ -40,6 +47,9 @@ in stdenv.mkDerivation rec {
       # keeping dependencies to build inputs in the final output.
       # We remove the build flags from buildInfo data.
       ./forget-build-dependencies.patch
+      ./support_arm.patch
+      ./unambiguous_appendNumber.patch
+      ./0002-d_state.cpp-Add-missing-dependenncy-on-local_shardin.patch
       (fetchpatch {
         url = https://projects.archlinux.org/svntogit/community.git/plain/trunk/boost160.patch?h=packages/mongodb;
         name = "boost160.patch";
@@ -51,30 +61,32 @@ in stdenv.mkDerivation rec {
     # fix environment variable reading
     substituteInPlace SConstruct \
         --replace "env = Environment(" "env = Environment(ENV = os.environ,"
-  '' + stdenv.lib.optionalString stdenv.isDarwin ''
+  '' + optionalString stdenv.isDarwin ''
 
     substituteInPlace src/third_party/s2/s1angle.cc --replace drem remainder
     substituteInPlace src/third_party/s2/s1interval.cc --replace drem remainder
     substituteInPlace src/third_party/s2/s2cap.cc --replace drem remainder
     substituteInPlace src/third_party/s2/s2latlng.cc --replace drem remainder
     substituteInPlace src/third_party/s2/s2latlngrect.cc --replace drem remainder
-  '' + stdenv.lib.optionalString stdenv.isi686 ''
+  '' + optionalString stdenv.is32bit ''
 
     # don't fail by default on i686
     substituteInPlace src/mongo/db/storage/storage_options.h \
-      --replace 'engine("wiredTiger")' 'engine("mmapv1")'
+      --replace 'engine = "wiredTiger";' 'engine = "mmapv1";'
   '';
 
-  NIX_CFLAGS_COMPILE = stdenv.lib.optional stdenv.cc.isClang "-Wno-unused-command-line-argument";
+  NIX_CFLAGS_COMPILE = optional stdenv.cc.isClang "-Wno-unused-command-line-argument";
 
   sconsFlags = [
     "--release"
     "--ssl"
     #"--rocksdb" # Don't have this packaged yet
     "--wiredtiger=${if stdenv.is64bit then "on" else "off"}"
-    "--js-engine=mozjs"
+    "--mmapv1=${if stdenv.is32bit then "on" else "off"}"
+    "--js-engine=${jsEngine}"
     "--use-sasl-client"
     "--disable-warnings-as-errors"
+    "--allocator=${allocator}"
     "VARIANT_DIR=nixos" # Needed so we don't produce argument lists that are too long for gcc / ld
   ] ++ map (lib: "--use-system-${lib}") system-libraries;
 
