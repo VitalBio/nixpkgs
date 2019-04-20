@@ -4,6 +4,7 @@ let version = "2.9.7"; in
   url = "https://github.com/cracklib/cracklib/releases/download/v${version}/cracklib-words-${version}.gz";
   sha256 = "12fk8w06q628v754l357cf8kfjna98wj09qybpqr892az3x4a33z";
 }) ]
+, lib, buildPackages
 }:
 
 stdenv.mkDerivation rec {
@@ -17,6 +18,9 @@ stdenv.mkDerivation rec {
 
   buildInputs = [ zlib gettext ];
 
+  nativeBuildInputs = lib.optional
+    (stdenv.hostPlatform != stdenv.buildPlatform) [ buildPackages.cracklib ];
+
   postPatch = ''
     chmod +x util/cracklib-format
     patchShebangs util
@@ -24,8 +28,15 @@ stdenv.mkDerivation rec {
     ln -vs ${toString wordlists} dicts/
   '';
 
-  postInstall = ''
-    make dict
+  postInstall = let
+    cracklib = if stdenv.buildPlatform != stdenv.hostPlatform
+      then "${buildPackages.cracklib}/bin"
+      else "$(pwd)/util";
+  in ''
+    export PATH="${cracklib}:''${PATH}"
+    create-cracklib-dict \
+      -o $out/share/cracklib/pw_dict \
+      dicts/*
   '';
   doInstallCheck = true;
   installCheckTarget = "test";
