@@ -144,11 +144,6 @@ if test "$noSysDirs" = "1"; then
     fi
 fi
 
-if test -n "${targetConfig-}"; then
-    # The host strip will destroy some important details of the objects
-    dontStrip=1
-fi
-
 eval "$oldOpts"
 
 providedPreConfigure="$preConfigure";
