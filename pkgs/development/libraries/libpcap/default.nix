@@ -21,8 +21,6 @@ stdenv.mkDerivation rec {
     "ac_cv_linux_vers=2"
   ];
 
-  dontStrip = stdenv.hostPlatform != stdenv.buildPlatform;
-
   prePatch = stdenv.lib.optionalString stdenv.isDarwin ''
     substituteInPlace configure --replace " -arch i386" ""
   '';
