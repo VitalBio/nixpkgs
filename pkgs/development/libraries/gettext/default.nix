@@ -1,4 +1,4 @@
-{ stdenv, lib, fetchurl, libiconv, xz, bison, automake115x, autoconf }:
+{ stdenv, lib, fetchurl, libiconv, xz, bison, automake115x, autoconf, buildPackages }:
 
 let allowBisonDependency = !stdenv.isDarwin; in
 stdenv.mkDerivation rec {
@@ -57,7 +57,7 @@ stdenv.mkDerivation rec {
   ] ++ lib.optional allowBisonDependency [
     # Only necessary for CVE-2018-18751.patch (unless CVE-2018-18751-bison.patch
     # is also applied):
-    bison
+    buildPackages.bison
   ] ++ [
     # Only necessary for CVE-2018-18751.patch:
     automake115x
