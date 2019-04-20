@@ -32,8 +32,6 @@ stdenv.mkDerivation rec {
     ]
     ++ upstreamPatches;
 
-  # Don't run the native `strip' when cross-compiling.
-  dontStrip = stdenv.hostPlatform != stdenv.buildPlatform;
   bash_cv_func_sigsetjmp = if stdenv.isCygwin then "missing" else null;
 
   meta = with stdenv.lib; {
