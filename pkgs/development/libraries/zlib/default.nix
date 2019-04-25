@@ -54,7 +54,6 @@ stdenv.mkDerivation (rec {
   # to the bootstrap-tools libgcc (as uses to happen on arm/mips)
   NIX_CFLAGS_COMPILE = stdenv.lib.optionalString (!stdenv.hostPlatform.isDarwin) "-static-libgcc";
 
-  dontStrip = stdenv.hostPlatform != stdenv.buildPlatform && static;
   configurePlatforms = [];
 
   installFlags = stdenv.lib.optionals (stdenv.hostPlatform.libc == "msvcrt") [
