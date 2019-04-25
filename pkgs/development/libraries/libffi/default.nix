@@ -60,8 +60,6 @@ stdenv.mkDerivation rec {
 
   inherit doCheck;
 
-  dontStrip = stdenv.hostPlatform != stdenv.buildPlatform; # Don't run the native `strip' when cross-compiling.
-
   # Install headers and libs in the right places.
   postFixup = ''
     mkdir -p "$dev/"
