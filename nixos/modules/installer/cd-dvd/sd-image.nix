@@ -69,6 +69,14 @@ in
       '';
     };
 
+    expandFS = mkOption {
+      type = types.bool;
+      default = true;
+      description = ''
+        expand the root file system on first boot
+      '';
+    };
+
     populateBootCommands = mkOption {
       example = literalExample "'' cp \${pkgs.myBootLoader}/u-boot.bin boot/ ''";
       description = ''
@@ -141,7 +149,7 @@ in
       '';
     }) {};
 
-    boot.postBootCommands = ''
+    boot.postBootCommands = mkIf config.sdImage.expandFS ''
       # On the first boot do some maintenance tasks
       if [ -f /nix-path-registration ]; then
         set -euo pipefail
