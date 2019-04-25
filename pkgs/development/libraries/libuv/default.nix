@@ -53,7 +53,7 @@ stdenv.mkDerivation rec {
 
   enableParallelBuilding = true;
 
-  doCheck = true;
+  doCheck = false;
 
   meta = with lib; {
     description = "A multi-platform support library with a focus on asynchronous I/O";
