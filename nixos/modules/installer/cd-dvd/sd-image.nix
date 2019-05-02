@@ -21,6 +21,14 @@ let
 in
 {
   options.sdImage = {
+    enable = mkOption {
+      type = types.bool;
+      default = false;
+      description = ''
+        enable module settings for an SD card image (file system layout, etc.)
+      '';
+    };
+
     imageName = mkOption {
       default = "${config.sdImage.imageBaseName}-${config.system.nixos.label}-${pkgs.stdenv.hostPlatform.system}.img";
       description = ''
@@ -87,7 +95,7 @@ in
     };
   };
 
-  config = {
+  config = mkIf config.sdImage.enable {
     fileSystems = {
       "/boot" = {
         device = "/dev/disk/by-label/NIXOS_BOOT";
