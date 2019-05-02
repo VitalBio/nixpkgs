@@ -93,6 +93,14 @@ in
         /boot partition on the SD image.
       '';
     };
+
+    processImageCommands = mkOption {
+      default = "";
+      type = types.string;
+      description = ''
+        Shell commands to modify the final $img image.
+      '';
+    };
   };
 
   config = mkIf config.sdImage.enable {
@@ -154,6 +162,8 @@ in
         # Verify the FAT partition before copying it.
         fsck.vfat -vn bootpart.img
         dd conv=notrunc if=bootpart.img of=$img seek=$START count=$SECTORS
+
+        ${config.sdImage.processImageCommands}
       '';
     }) {};
 
