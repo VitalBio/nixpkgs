@@ -56,7 +56,16 @@ copyToKernelsDir() {
     # kernels or initrd if this script is ever interrupted.
     if ! test -e $dst; then
         local dstTmp=$dst.tmp.$$
-        cp -r $src $dstTmp
+        shift 1
+        if [[ ${1:-} ]]; then
+            for f in "$@"; do
+                local dir="$(dirname "$f")"
+                mkdir -p "$dstTmp/$dir"
+                cp "$src/$f" "$dstTmp/$dir/"
+            done
+        else
+            cp -r $src $dstTmp
+        fi
         mv $dstTmp $dst
     fi
     filesCopied[$dst]=1
@@ -75,10 +84,10 @@ addEntry() {
 
     copyToKernelsDir "$path/kernel"; kernel=$result
     copyToKernelsDir "$path/initrd"; initrd=$result
-    # XXX UGLY: maybe the system config should have a top-level "dtbs" entry?
+
     dtbDir=$(readlink -m "$path/kernel/../dtbs")
     if [ -d "$dtbDir" ]; then
-        copyToKernelsDir "$dtbDir"; dtbs=$result
+        copyToKernelsDir "$dtbDir" @dtbs@; dtbs=$result
     fi
 
     timestampEpoch=$(stat -L -c '%Z' $path)

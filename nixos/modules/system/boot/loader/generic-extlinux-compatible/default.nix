@@ -8,7 +8,7 @@ let
 
   timeoutStr = if blCfg.timeout == null then "-1" else toString blCfg.timeout;
 
-  makeBuilder = pkgs: pkgs.callPackage ./extlinux-conf-builder.nix { };
+  makeBuilder = pkgs: pkgs.callPackage ./extlinux-conf-builder.nix { dtbs = cfg.dtbs; };
   builder = makeBuilder pkgs;
   nativeBuilder = makeBuilder pkgs.buildPackages;
 in
@@ -25,6 +25,15 @@ in
 
           See <link xlink:href="http://git.denx.de/?p=u-boot.git;a=blob;f=doc/README.distro;hb=refs/heads/master">U-boot's documentation</link>
           for more information.
+        '';
+      };
+
+      dtbs = mkOption {
+        default = [];
+        type = types.listOf types.string;
+        description = ''
+          which DTBs to install to the boot partition,
+          if the list is empty the script will copy over all DTBs.
         '';
       };
 
