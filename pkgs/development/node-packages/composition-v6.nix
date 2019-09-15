@@ -6,8 +6,11 @@
 
 let
   nodeEnv = import ./node-env.nix {
-    inherit (pkgs) stdenv python2 utillinux runCommand writeTextFile;
+    inherit (pkgs) stdenv buildPackages utillinux runCommand writeTextFile;
     inherit nodejs;
+    # inherit (pkgs.buildPackages) utillinux;
+    # inherit (pkgs) stdenv buildPackages runCommand writeTextFile;
+    # inherit nodejs;
     libtool = if pkgs.stdenv.isDarwin then pkgs.darwin.cctools else null;
   };
 in
