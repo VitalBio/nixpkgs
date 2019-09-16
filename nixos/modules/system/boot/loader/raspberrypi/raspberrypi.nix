@@ -7,14 +7,31 @@ let
 
   inherit (pkgs.stdenv.hostPlatform) platform;
 
-  builderUboot = import ./uboot-builder.nix { inherit pkgs configTxt; inherit (cfg) version; };
-  builderGeneric = import ./raspberrypi-builder.nix { inherit pkgs configTxt; };
+  builderUboot = hostOrBuild: let
+    limit = toString cfg.uboot.configurationLimit;
+    builder = import ./uboot-builder.nix {
+      inherit configTxt;
+      inherit (cfg) version;
+      pkgs = hostOrBuild;
+      hostPackages = pkgs;
+    };
+  in "${builder} -g ${limit} -t ${timeoutStr} -c";
 
-  builder = 
-    if cfg.uboot.enable then
-      "${builderUboot} -g ${toString cfg.uboot.configurationLimit} -t ${timeoutStr} -c"
-    else
-      "${builderGeneric} -c";
+  builderGeneric = hostOrBuild: let
+    builder = import ./raspberrypi-builder.nix {
+      inherit configTxt;
+      pkgs = hostOrBuild;
+      hostPackages = pkgs;
+    };
+  in "${builder} -c";
+
+  builder = if cfg.uboot.enable
+    then builderUboot pkgs
+    else builderGeneric pkgs;
+
+  builderNative = if cfg.uboot.enable
+    then builderUboot pkgs.buildPackages
+    else builderGeneric pkgs.buildPackages;
 
   blCfg = config.boot.loader;
   timeoutStr = if blCfg.timeout == null then "-1" else toString blCfg.timeout;
@@ -102,6 +119,7 @@ in
     };
 
     system.build.installBootLoader = builder;
+    system.build.installBootLoaderNative = builderNative;
     system.boot.loader.id = "raspberrypi";
     system.boot.loader.kernelFile = platform.kernelTarget;
   };

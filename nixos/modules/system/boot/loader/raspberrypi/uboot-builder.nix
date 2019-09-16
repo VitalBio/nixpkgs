@@ -1,32 +1,53 @@
-{ pkgs, version, configTxt }:
+{ pkgs, hostPackages, version, configTxt }:
 
 let
-  isAarch64 = pkgs.stdenv.hostPlatform.isAarch64;
+  isAarch64 = hostPackages.stdenv.hostPlatform.isAarch64;
 
-  uboot =
+  uboot = with hostPackages;
     if version == 0 then
-      pkgs.ubootRaspberryPiZero
+      ubootRaspberryPiZero
     else if version == 1 then
-      pkgs.ubootRaspberryPi
+      ubootRaspberryPi
     else if version == 2 then
-      pkgs.ubootRaspberryPi2
+      ubootRaspberryPi2
     else
       if isAarch64 then
-        pkgs.ubootRaspberryPi3_64bit
+        ubootRaspberryPi3_64bit
       else
-        pkgs.ubootRaspberryPi3_32bit;
+        ubootRaspberryPi3_32bit;
 
-  extlinuxConfBuilder =
-    import ../generic-extlinux-compatible/extlinux-conf-builder.nix {
-      pkgs = pkgs.buildPackages;
-    };
+  dtbs = {
+    "0" = [
+      "bcm2835-rpi-zero.dtb"
+      "bcm2835-rpi-zero-w.dtb"
+    ];
+    "1" = [
+      "bcm2835-rpi-a.dtb"
+      "bcm2835-rpi-a-plus.dtb"
+      "bcm2835-rpi-b.dtb"
+      "bcm2835-rpi-b-plus.dtb"
+      "bcm2835-rpi-b-rev2.dtb"
+      "bcm2835-rpi-cm1-io1.dtb"
+    ];
+    "2" = [
+      "bcm2836-rpi-2-b.dtb"
+    ];
+    "3" = [
+      "broadcom/bcm2837-rpi-3-b.dtb"
+      "broadcom/bcm2837-rpi-3-b-plus.dtb"
+      "broadcom/bcm2837-rpi-cm3-io3.dtb"
+    ];
+  }."${toString version}";
+
+  extlinuxConfBuilder = pkgs.callPackage
+    ../generic-extlinux-compatible/extlinux-conf-builder.nix { inherit dtbs; };
 in
 pkgs.substituteAll {
   src = ./uboot-builder.sh;
   isExecutable = true;
-  inherit (pkgs.buildPackages) bash;
-  path = with pkgs.buildPackages; [coreutils gnused gnugrep];
-  firmware = pkgs.raspberrypifw;
+  inherit (pkgs) bash;
+  path = with pkgs; [coreutils gnused gnugrep];
+  firmware = hostPackages.raspberrypifw;
   inherit uboot;
   inherit configTxt;
   inherit extlinuxConfBuilder;
