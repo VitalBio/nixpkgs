@@ -1,6 +1,6 @@
 { stdenv, fetchurl, fetchpatch, lib, pkgconfig, utillinux, libcap, libtirpc, libevent
 , sqlite, kerberos, kmod, libuuid, keyutils, lvm2, systemd, coreutils, tcp_wrappers
-, buildEnv, python3
+, buildEnv, python3, buildPackages
 }:
 
 let
@@ -27,6 +27,8 @@ stdenv.mkDerivation rec {
     libuuid keyutils kerberos tcp_wrappers
     python3
   ];
+
+  depsBuildBuild = [ buildPackages.stdenv.cc ];
 
   enableParallelBuilding = true;
 
