@@ -8,11 +8,6 @@ stdenv.mkDerivation rec {
     sha256 = "0xqjw8df68f4kzkns5gcah61s5wk0m44qdk2z1d6388w6viwxhsz";
   };
 
-  preConfigure = ''
-    export ac_cv_func_malloc_0_nonnull=yes
-    export ac_cv_func_realloc_0_nonnull=yes
-  '';
-
   nativeBuildInputs = [ openssh ];
 
   installPhase =

@@ -13,9 +13,8 @@ stdenv.mkDerivation rec {
     sha256 = "0cr2d4fdv4ljvag55dsz3rpha1jan2gc3jhr06ycyk43450pl58p";
   };
 
-  # Goes past the rpl_malloc linking failure; fixes silent file breakage
+  # fixes silent file breakage
   preConfigure = ''
-    export ac_cv_func_malloc_0_nonnull=yes
     substituteInPlace ./configure \
       --replace "/usr/bin/file" "${buildPackages.file}/bin/file"
   '';

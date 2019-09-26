@@ -14,11 +14,7 @@ stdenv.mkDerivation rec {
   nativeBuildInputs = [ autoconf automake gettext ];
   buildInputs = [ ncurses ];
 
-  preConfigure = stdenv.lib.optionalString (stdenv.buildPlatform != stdenv.hostPlatform) ''
-    # Goes past the rpl_malloc linking failure
-    export ac_cv_func_malloc_0_nonnull=yes
-    export ac_cv_func_realloc_0_nonnull=yes
-  '' + ''
+  preConfigure = ''
     echo $version > .tarball-version
     ./autogen.sh
   '';

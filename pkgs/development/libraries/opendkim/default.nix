@@ -12,8 +12,6 @@ stdenv.mkDerivation rec {
 
   configureFlags= [
     "--with-milter=${libmilter}"
-    "ac_cv_func_malloc_0_nonnull=yes"
-    "ac_cv_func_realloc_0_nonnull=yes"
   ];
 
   nativeBuildInputs = [ autoreconfHook pkgconfig makeWrapper ];

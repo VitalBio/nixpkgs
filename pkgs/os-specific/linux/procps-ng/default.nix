@@ -33,10 +33,7 @@ stdenv.mkDerivation rec {
 
   # Too red
   configureFlags = [ "--disable-modern-top" ]
-    ++ lib.optional withSystemd "--with-systemd"
-    ++ lib.optionals (stdenv.hostPlatform != stdenv.buildPlatform)
-    [ "ac_cv_func_malloc_0_nonnull=yes"
-      "ac_cv_func_realloc_0_nonnull=yes" ];
+    ++ lib.optional withSystemd "--with-systemd";
 
   installPhase = if watchOnly then ''
     install -m 0755 -D watch $out/bin/watch
